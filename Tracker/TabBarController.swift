@@ -1,25 +1,52 @@
 import UIKit
 
 final class TabBarController: UITabBarController {
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        configureTabBarAppearance()
+        setupViewControllers()
+    }
+    
+    private func configureTabBarAppearance() {
+        tabBar.tintColor = .blue
+        tabBar.unselectedItemTintColor = .gray
+        tabBar.backgroundColor = .white
+    }
+    
+    private func setupViewControllers() {
+        let trackersVC = createTrackersViewController()
+        let statisticsVC = createStatisticsViewController()
         
-        let trackersViewController = TrackersViewController()
-        let navigationViewController = UINavigationController(rootViewController: trackersViewController)
-        let statisticsViewController = StatisticsViewController()
-        
-        statisticsViewController.tabBarItem = UITabBarItem(
-            title: "Статистика",
-            image: UIImage(resource: .statisticsTabBarIcon),
-            selectedImage: nil
-        )
-        
-        trackersViewController.tabBarItem = UITabBarItem(
+        viewControllers = [
+            embedInNavigationController(trackersVC),
+            statisticsVC
+        ]
+    }
+    
+    private func createTrackersViewController() -> UIViewController {
+        let controller = TrackersViewController()
+        controller.tabBarItem = UITabBarItem(
             title: "Трекеры",
             image: UIImage(resource: .trackersTabBarIcon),
-            selectedImage: nil
+            tag: 0
         )
-        
-        self.viewControllers = [navigationViewController, statisticsViewController]
+        return controller
+    }
+    
+    private func createStatisticsViewController() -> UIViewController {
+        let controller = StatisticsViewController()
+        controller.tabBarItem = UITabBarItem(
+            title: "Статистика",
+            image: UIImage(resource: .statisticsTabBarIcon),
+            tag: 1
+        )
+        return controller
+    }
+    
+    private func embedInNavigationController(_ controller: UIViewController) -> UINavigationController {
+        let navController = UINavigationController(rootViewController: controller)
+        navController.navigationBar.prefersLargeTitles = true
+        return navController
     }
 }

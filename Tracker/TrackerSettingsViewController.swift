@@ -22,7 +22,7 @@ final class TrackerSettingsViewController: UIViewController, ScheduleViewControl
     
     func setWeekdays(weekdays: [Weekday]) {
         selectedWeekdays = weekdays
-        button.backgroundColor = .colorSelection18
+        button.backgroundColor = UIColor.colorSelection18
     }
     
     override func viewDidLoad() {
@@ -33,13 +33,14 @@ final class TrackerSettingsViewController: UIViewController, ScheduleViewControl
     private func makeTitleLabel(text: String) -> UILabel {
         let label = UILabel()
         label.text = text
-        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }
-    
+
     private func makeTextField() -> UITextField {
-        textField.backgroundColor = .systemGray6
+        let textField = UITextField()
+        textField.backgroundColor = UIColor.systemGray6
         textField.layer.cornerRadius = 16
         textField.placeholder = "Введите название трекера"
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -52,7 +53,7 @@ final class TrackerSettingsViewController: UIViewController, ScheduleViewControl
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        textField.resignFirstResponder()
+        textField.endEditing(true)
         return true
     }
     
@@ -71,17 +72,17 @@ final class TrackerSettingsViewController: UIViewController, ScheduleViewControl
     }
     
     private func makeCancelButton() -> UIButton {
-        let button = UIButton()
-        button.layer.borderWidth = 1
-        button.layer.borderColor = UIColor.red.cgColor
-        button.addTarget(self, action: #selector(self.didTapCancelButton), for: .touchUpInside)
+        let button = UIButton(type: .system)
         button.setTitle("Отменить", for: .normal)
         button.setTitleColor(.red, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         button.backgroundColor = .clear
         button.tintColor = .red
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.red.cgColor
         button.layer.cornerRadius = 16
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.addTarget(self, action: #selector(didTapCancelButton), for: .touchUpInside)
         return button
     }
     
@@ -100,23 +101,40 @@ final class TrackerSettingsViewController: UIViewController, ScheduleViewControl
     
     @objc
     private func didTapCreateButton() {
-        guard let trackerType else {
-            assertionFailure("no tracekr type")
+        guard let trackerType = trackerType else {
+            assertionFailure("no tracker type")
             return
         }
-        if trackerType == TrackerTypes.notRegular {
-            let tracker = Tracker(id: UUID(), name: textField.text ?? "", color: .colorSelection12, emoji: "❤️", calendar: nil, date: Date())
-            delegate?.addTracker(category: "Радостные мелочи", tracker: tracker)
+        
+        if trackerType == .notRegular {
+            let tracker = Tracker(
+                id: UUID(),
+                name: textField.text ?? "",
+                color: .colorSelection12,
+                emoji: "❤️",
+                calendar: nil,
+                date: Date()
+            )
+            delegate?.addTracker(category: "Немного веселья", tracker: tracker)
             return
         }
-        guard let selectedWeekdays else {
+        
+        guard let selectedWeekdays = selectedWeekdays else {
             print("noSelectedDays")
             return
         }
-        let tracker = Tracker(id: UUID(), name: textField.text ?? "", color: .colorSelection12, emoji: "❤️", calendar: selectedWeekdays, date: nil)
-        delegate?.addTracker(category: "Радостные мелочи", tracker: tracker)
+        
+        let tracker = Tracker(
+            id: UUID(),
+            name: textField.text ?? "",
+            color: .colorSelection12,
+            emoji: "❤️",
+            calendar: selectedWeekdays,
+            date: nil
+        )
+        delegate?.addTracker(category: "Немного веселья", tracker: tracker)
     }
-    
+
     private func setupClearButton() {
         clearButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
         clearButton.tintColor = .gray
@@ -124,24 +142,27 @@ final class TrackerSettingsViewController: UIViewController, ScheduleViewControl
         clearButton.frame = CGRect(x: 0, y: 0, width: 17, height: 17)
         
         let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: 29, height: 75))
-        clearButton.center = CGPoint(x: paddingView.frame.width - 12 - 8.5, y: paddingView.frame.height / 2)
+        clearButton.center = CGPoint(
+            x: paddingView.frame.width - 12 - 8.5,
+            y: paddingView.frame.height / 2
+        )
         paddingView.addSubview(clearButton)
         
         textField.rightView = paddingView
         textField.rightViewMode = .whileEditing
         clearButton.isHidden = true
     }
-    
     @objc
     private func didTapCancelButton() {
-        self.dismiss(animated: true)
+        self.dismiss(animated: true, completion: nil)
     }
-    
+
     @objc
     private func didEditTextField() {
-        clearButton.isHidden = textField.text?.isEmpty ?? true
+        let isEmpty = textField.text?.isEmpty ?? true
+        clearButton.isHidden = isEmpty
     }
-    
+
     @objc
     private func clearTextField() {
         textField.text = ""
@@ -162,66 +183,88 @@ final class TrackerSettingsViewController: UIViewController, ScheduleViewControl
             label.topAnchor.constraint(equalTo: view.topAnchor, constant: 34),
             label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
+            
             textField.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 38),
             textField.heightAnchor.constraint(equalToConstant: 75),
             textField.widthAnchor.constraint(equalToConstant: view.frame.width - 32),
             textField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
+            
+            
             tableView.topAnchor.constraint(equalTo: textField.bottomAnchor, constant: 24),
             tableView.widthAnchor.constraint(equalToConstant: view.frame.width - 32),
             tableView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            
             
             cancelButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             cancelButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             cancelButton.heightAnchor.constraint(equalToConstant: 60),
             cancelButton.widthAnchor.constraint(equalToConstant: (view.frame.width - 48) / 2),
             
+            
+            
             createButton.widthAnchor.constraint(equalToConstant: (view.frame.width - 48) / 2),
             createButton.heightAnchor.constraint(equalToConstant: 60),
             createButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             createButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            
+            
         ])
     }
 }
 
 extension TrackerSettingsViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard let trackerType else { return 1 }
+        guard let trackerType = trackerType else {
+            
+            return 1
+        }
         
-        return trackerType.rawValue == TrackerTypes.habit.rawValue ? 2 : 1
+        if trackerType.rawValue == TrackerTypes.habit.rawValue {
+            
+            return 2
+            
+        } else {
+            
+            return 1
+        }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        cell.selectionStyle = .none
+        cell.contentView.backgroundColor = .systemGray6
+        
         let image = UIImageView(image: .property)
         image.translatesAutoresizingMaskIntoConstraints = false
+        cell.contentView.addSubview(image)
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell")
-        cell?.selectionStyle = .none
-        cell?.contentView.backgroundColor = .systemGray6
-        cell?.contentView.addSubview(image)
-        cell?.textLabel?.text = indexPath.row == 0 ? "Категория" : "Расписание"
+        cell.textLabel?.text = indexPath.row == 0 ? "Категория" : "Расписание"
         
         NSLayoutConstraint.activate([
             image.heightAnchor.constraint(equalToConstant: 24),
             image.widthAnchor.constraint(equalToConstant: 24),
-            image.trailingAnchor.constraint(equalTo: cell!.contentView.trailingAnchor, constant: -16),
-            image.centerYAnchor.constraint(equalTo: cell!.centerYAnchor)
+            image.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -16),
+            image.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor)
         ])
-        return cell!
+        
+        return cell
     }
 }
 
 extension TrackerSettingsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 75
+        let rowHeight: CGFloat = 75
+        return rowHeight
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if indexPath.row == 1 {
-            let scheduleViewController = ScheduleViewController()
-            scheduleViewController.delegate = self
-            present(scheduleViewController, animated: true)
-        }
+        guard indexPath.row == 1 else { return }
+        
+        let scheduleViewController = ScheduleViewController()
+        scheduleViewController.delegate = self
+        present(scheduleViewController, animated: true)
     }
     
 }

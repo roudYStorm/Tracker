@@ -1,79 +1,102 @@
 import UIKit
 
-
 final class MakeTrackerViewController: UIViewController {
-    
     weak var trackersViewController: TrackerSettingsViewControllerDelegate?
+    
+  
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        configureViewAppearance()
         setUp()
     }
     
     
-    private func setUp() {
-        let label = makeLabel()
-        let habitButton = makeButton(text: "Привычка")
-        let notHabitButton = makeButton(text: "Нерегулярное событие")
-        
-        view.addSubviews([label, habitButton, notHabitButton])
-        
-        
-        NSLayoutConstraint.activate([
-            label.topAnchor.constraint(equalTo: view.topAnchor, constant: 34),
-            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            
-            habitButton.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 295),
-            habitButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            habitButton.widthAnchor.constraint(equalToConstant: view.frame.width - 40),
-            habitButton.heightAnchor.constraint(equalToConstant: 60),
-            
-            notHabitButton.topAnchor.constraint(equalTo: habitButton.bottomAnchor, constant: 16),
-            notHabitButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            notHabitButton.widthAnchor.constraint(equalToConstant: view.frame.width - 40),
-            notHabitButton.heightAnchor.constraint(equalToConstant: 60)
-        ])
+    
+    private func configureViewAppearance() {
+        view.backgroundColor = .white
     }
+    
+    private func setUp() {
+        let titleLabel = makeLabel()
+        let buttons = [
+            makeButton(text: "Привычка", action: #selector(didTapHabitButton)),
+            makeButton(text: "Нерегулярное событие", action: #selector(didTapNotHabitButton))
+        ]
+        
+        view.addSubviews([titleLabel] + buttons)
+        activateConstraints(for: titleLabel, buttons: buttons)
+    }
+    
+   
     
     private func makeLabel() -> UILabel {
-        let label = UILabel()
-        label.text = "Создание трекера"
-        label.font = .systemFont(ofSize: 16, weight: .medium)
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
+        let headerLabel = UILabel(frame: .zero)
+        headerLabel.textAlignment = .center
+        headerLabel.attributedText = NSAttributedString(
+            string: "Создание трекера",
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 16, weight: .medium),
+                .foregroundColor: UIColor.label
+            ]
+        )
+        headerLabel.translatesAutoresizingMaskIntoConstraints = false
+        headerLabel.setContentHuggingPriority(.required, for: .vertical)
+        return headerLabel
     }
     
-    private func makeButton(text: String) -> UIButton {
-        let button = UIButton()
+    private func makeButton(text: String, action: Selector) -> UIButton {
+        let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle(text, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-        button.titleLabel?.textColor = .white
-        button.backgroundColor = UIColor(resource: .ypBlack)
-        button.layer.cornerRadius = 16
-        
-        if text == "Привычка" {
-            button.addTarget(self, action: #selector(didTapHabitButton), for: .touchUpInside)
-        } else {
-            button.addTarget(self, action: #selector(didTapNotHabitButton), for: .touchUpInside)
-        }
+        configureButtonAppearance(button: button, text: text)
+        button.addTarget(self, action: action, for: .touchUpInside)
         return button
     }
     
-    @objc
-    private func didTapHabitButton() {
-        let trackerSettingsViewController = TrackerSettingsViewController()
-        trackerSettingsViewController.trackerType = TrackerTypes.habit
-        trackerSettingsViewController.delegate = trackersViewController
-        present(trackerSettingsViewController, animated: true)
+    private func configureButtonAppearance(button: UIButton, text: String) {
+        button.setTitle(text, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = UIColor(resource: .ypBlack)
+        button.layer.cornerRadius = 16
+        button.layer.masksToBounds = true
     }
     
-    @objc
-    private func didTapNotHabitButton() {
-        let trackerSettingsViewController = TrackerSettingsViewController()
-        trackerSettingsViewController.trackerType = TrackerTypes.notRegular
-        trackerSettingsViewController.delegate = trackersViewController
-        present(trackerSettingsViewController, animated: true)
+   
+    
+    private func activateConstraints(for label: UILabel, buttons: [UIButton]) {
+        guard let habitButton = buttons.first, let eventButton = buttons.last else { return }
+        
+        NSLayoutConstraint.activate([
+            label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 34),
+            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            habitButton.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 295),
+            habitButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            habitButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            habitButton.heightAnchor.constraint(equalToConstant: 60),
+            
+            eventButton.topAnchor.constraint(equalTo: habitButton.bottomAnchor, constant: 16),
+            eventButton.leadingAnchor.constraint(equalTo: habitButton.leadingAnchor),
+            eventButton.trailingAnchor.constraint(equalTo: habitButton.trailingAnchor),
+            eventButton.heightAnchor.constraint(equalTo: habitButton.heightAnchor)
+        ])
+    }
+    
+    
+    
+    @objc private func didTapHabitButton() {
+        presentTrackerSettingsController(with: .habit)
+    }
+    
+    @objc private func didTapNotHabitButton() {
+        presentTrackerSettingsController(with: .notRegular)
+    }
+    
+    private func presentTrackerSettingsController(with type: TrackerTypes) {
+        let controller = TrackerSettingsViewController()
+        controller.trackerType = type
+        controller.delegate = trackersViewController
+        present(controller, animated: true)
     }
 }

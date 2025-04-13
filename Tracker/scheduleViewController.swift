@@ -10,9 +10,9 @@ final class ScheduleViewController: UIViewController {
     
     private let weekdays = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"]
     
-    private var selectedWeekdays: [Weekday] = []
     
     
+    private var selectedWeekdays = [Weekday]()
     override func viewDidLoad() {
         super.viewDidLoad()
         setUp()
@@ -21,21 +21,22 @@ final class ScheduleViewController: UIViewController {
     private func makeLabel() -> UILabel {
         let label = UILabel()
         label.text = "Расписание"
-        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.font = UIFont.systemFont(ofSize: 16.0, weight: .medium)
+        label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }
-    
+
     private func makeButton() -> UIButton {
-        let button = UIButton()
+        let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setTitle("Готово", for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-        button.titleLabel?.textColor = .white
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16.0, weight: .medium)
+        button.setTitleColor(.white, for: .normal)
         button.backgroundColor = UIColor(resource: .ypBlack)
-        button.layer.cornerRadius = 16
-        button.addTarget(self, action: #selector(self.didTapButton), for: .touchUpInside)
-        
+        button.layer.cornerRadius = 16.0
+        button.layer.masksToBounds = true
+        button.addTarget(self, action: #selector(didTapButton), for: .touchUpInside)
         return button
     }
     
@@ -52,6 +53,7 @@ final class ScheduleViewController: UIViewController {
     
     @objc
     private func didTapButton() {
+        
         delegate?.setWeekdays(weekdays: selectedWeekdays)
         dismiss(animated: true)
     }
@@ -59,74 +61,90 @@ final class ScheduleViewController: UIViewController {
     
     private func setUp() {
         view.backgroundColor = .white
+        
         let label = makeLabel()
         let button = makeButton()
         let tableView = makeTableView()
         
-        view.addSubviews([label, button, tableView])
+        
+        [label, button, tableView].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview($0)
+        }
+        
         
         NSLayoutConstraint.activate([
-            label.topAnchor.constraint(equalTo: view.topAnchor, constant: 34),
+            
+            label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 34),
             label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
-            button.widthAnchor.constraint(equalToConstant: view.frame.width - 40),
-            button.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            button.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            button.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             button.heightAnchor.constraint(equalToConstant: 60),
             button.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             
-            tableView.widthAnchor.constraint(equalToConstant: view.frame.width - 32),
-            tableView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            tableView.bottomAnchor.constraint(equalTo: button.topAnchor, constant: -47),
-            tableView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 30)
+            
+            tableView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 30),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            tableView.bottomAnchor.constraint(equalTo: button.topAnchor, constant: -47)
         ])
     }
 }
 
 extension ScheduleViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        tableView.frame.height / 7
+        let rowHeight = tableView.bounds.height / CGFloat(weekdays.count)
+        return rowHeight
     }
 }
 
 extension ScheduleViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        7
+        // Количество дней недели
+        let numberOfDays = 7
+        return numberOfDays
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell") ?? UITableViewCell(style: .default, reuseIdentifier: "cell")
+        
         let switchView = UISwitch()
         switchView.translatesAutoresizingMaskIntoConstraints = false
         switchView.addTarget(self, action: #selector(didSwitch(_:)), for: .valueChanged)
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell")
-        cell?.selectionStyle = .none
         
-        cell?.backgroundColor = .systemGray6
-        cell?.textLabel?.text = weekdays[indexPath.row]
-        cell?.accessoryView = switchView
-        return cell!
+        cell.selectionStyle = .none
+        cell.backgroundColor = .systemGray6
+        cell.textLabel?.text = weekdays[indexPath.row]
+        cell.accessoryView = switchView
+        
+        return cell
     }
     
     @objc
     private func didSwitch(_ sender: UISwitch) {
-        if let cell = sender.superview as? UITableViewCell,
-           let indexPath = tableView.indexPath(for: cell) {
-            let day = weekdays[indexPath.row]
-            
-            if sender.isOn {
-                if let weekday = Weekday(rawValue: day) {
-                    selectedWeekdays.append(weekday)
-                    print(selectedWeekdays)
-                }
-            } else {
-                if let weekday = Weekday(rawValue: day),
-                   let index = selectedWeekdays.firstIndex(of: weekday) {
-                    selectedWeekdays.remove(at: index)
-                    print(selectedWeekdays)
-                }
-            }
+        guard let tableCell = sender.superview as? UITableViewCell,
+              let cellPosition = tableView.indexPath(for: tableCell),
+              cellPosition.row < weekdays.count else {
+            return
         }
+        
+        let selectedDay = weekdays[cellPosition.row]
+        guard let weekday = Weekday(rawValue: selectedDay) else { return }
+        
+        if sender.isOn {
+            selectedWeekdays.append(weekday)
+        } else {
+            selectedWeekdays.removeAll { $0 == weekday }
+        }
+        
+        debugPrint("Selected weekdays updated: \(selectedWeekdays)")
     }
 }
+
+
+
 enum Weekday: String, CaseIterable {
     case sunday = "Воскресенье"
     case monday = "Понедельник"
